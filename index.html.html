@@ -1,0 +1,1308 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>상훈's Dashboard</title>
+    <link rel="stylesheet" as="style" crossorigin
+        href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css" />
+    <style>
+        :root {
+            /* Light Theme Palette */
+            --bg-color: #f0fdf4;
+            --bg-gradient: radial-gradient(circle at 10% 40%, rgba(204, 251, 241, 0.8), rgba(255, 255, 255, 0) 35%), radial-gradient(circle at 90% 20%, rgba(220, 252, 231, 0.8), rgba(255, 255, 255, 0) 35%), radial-gradient(circle at 50% 80%, rgba(219, 234, 254, 0.6), rgba(255, 255, 255, 0) 40%);
+            --card-bg: rgba(255, 255, 255, 0.65);
+            --text-main: #111827;
+            --text-sub: #6b7280;
+            --border-color: rgba(255, 255, 255, 0.7);
+            --accent-blue: #3b82f6;
+            --accent-blue-light: #eff6ff;
+            --accent-red: #ef4444;
+            --accent-red-light: #fef2f2;
+            --accent-green: #10b981;
+            --accent-green-light: #ecfdf5;
+            --danger: #ff4d4f;
+            --shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+            --card-radius: 32px;
+        }
+
+        body.dark-mode {
+            /* Dark Theme Palette */
+            --bg-color: #0f172a;
+            --bg-gradient: radial-gradient(circle at 10% 40%, rgba(13, 148, 136, 0.3), rgba(15, 23, 42, 0) 35%), radial-gradient(circle at 90% 20%, rgba(4, 120, 87, 0.3), rgba(15, 23, 42, 0) 35%), radial-gradient(circle at 50% 80%, rgba(29, 78, 216, 0.3), rgba(15, 23, 42, 0) 40%);
+            --card-bg: rgba(30, 41, 59, 0.75);
+            --text-main: #f8fafc;
+            --text-sub: #94a3b8;
+            --border-color: rgba(255, 255, 255, 0.05);
+            --accent-blue: #60a5fa;
+            --accent-blue-light: rgba(59, 130, 246, 0.2);
+            --accent-red: #f43f5e;
+            --accent-red-light: rgba(244, 63, 94, 0.1);
+            --accent-green: #34d399;
+            --accent-green-light: rgba(16, 185, 129, 0.1);
+            --shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Pretendard', sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            background-image: var(--bg-gradient);
+            background-attachment: fixed;
+            color: var(--text-main);
+            display: flex;
+            justify-content: center;
+            padding: 30px 20px;
+            min-height: 100vh;
+            transition: background 0.4s ease, color 0.4s ease;
+        }
+
+        /* ----- BENTO BOX LAYOUT ----- */
+        .dashboard-container {
+            width: 100%;
+            max-width: 1280px;
+            display: grid;
+            gap: 24px;
+            grid-template-columns: repeat(4, 1fr);
+            grid-auto-rows: minmax(180px, auto);
+            grid-template-areas:
+                "header header header header"
+                "calendar calendar weather focus"
+                "economy economy news news";
+        }
+
+        @media (max-width: 1100px) {
+            .dashboard-container {
+                grid-template-columns: repeat(2, 1fr);
+                grid-template-areas:
+                    "header header"
+                    "weather focus"
+                    "calendar calendar"
+                    "news news"
+                    "economy economy";
+            }
+        }
+
+        @media (max-width: 650px) {
+            .dashboard-container {
+                grid-auto-rows: minmax(140px, auto);
+                grid-template-columns: 1fr;
+                grid-template-areas:
+                    "header"
+                    "weather"
+                    "focus"
+                    "calendar"
+                    "news"
+                    "economy";
+            }
+        }
+
+        .header {
+            grid-area: header;
+        }
+
+        .economy {
+            grid-area: economy;
+        }
+
+        .weather {
+            grid-area: weather;
+        }
+
+        .focus {
+            grid-area: focus;
+        }
+
+        .calendar {
+            grid-area: calendar;
+        }
+
+        .news {
+            grid-area: news;
+        }
+
+        /* ----- CARD STYLING (GLASSMORPHISM) ----- */
+        .card {
+            background: var(--card-bg);
+            border-radius: var(--card-radius);
+            padding: 30px;
+            box-shadow: var(--shadow);
+            border: 1px solid var(--border-color);
+            backdrop-filter: blur(24px);
+            -webkit-backdrop-filter: blur(24px);
+            display: flex;
+            flex-direction: column;
+            transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275), box-shadow 0.4s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .card:hover {
+            transform: translateY(-8px) scale(1.02);
+            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.1);
+            z-index: 10;
+        }
+
+        body.dark-mode .card:hover {
+            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.7);
+        }
+
+        .card-title {
+            font-size: 1.1rem;
+            font-weight: 800;
+            margin-bottom: 24px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: var(--text-main);
+            letter-spacing: -0.3px;
+        }
+
+        .text-sub {
+            color: var(--text-sub);
+            font-size: 0.9rem;
+        }
+
+        /* ----- HEADER ----- */
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 24px 35px;
+            border-radius: 40px;
+            /* Super pill shape */
+        }
+
+        .header h1 {
+            font-size: 1.8rem;
+            font-weight: 800;
+            color: var(--accent-blue);
+            margin-bottom: 6px;
+            letter-spacing: -0.5px;
+        }
+
+        .header-meta {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+        }
+
+        .chip {
+            background: var(--accent-blue-light);
+            color: var(--accent-blue);
+            padding: 10px 18px;
+            border-radius: 25px;
+            font-size: 0.95rem;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        @media (max-width: 650px) {
+            .header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 20px;
+            }
+
+            .header-meta {
+                flex-wrap: wrap;
+            }
+        }
+
+        /* ----- WEATHER ----- */
+        .weather-content {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            gap: 10px;
+            flex: 1;
+        }
+
+        .weather-icon {
+            font-size: 4rem;
+            line-height: 1;
+            margin-bottom: 5px;
+        }
+
+        .temp {
+            font-size: 3.2rem;
+            font-weight: 800;
+            line-height: 1;
+        }
+
+        .weather-details p {
+            font-size: 0.95rem;
+            margin-top: 8px;
+            color: var(--text-sub);
+            font-weight: 500;
+        }
+
+        .badge-green {
+            background: var(--accent-green-light);
+            color: var(--accent-green);
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-weight: 700;
+            font-size: 0.8rem;
+        }
+
+        /* ----- ECONOMY (2x2) ----- */
+        .eco-section {
+            flex: 1;
+        }
+
+        .eco-section h3 {
+            font-size: 0.95rem;
+            color: var(--text-sub);
+            margin-bottom: 12px;
+            font-weight: 700;
+        }
+
+        .eco-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 16px;
+        }
+
+        .eco-section:last-child .eco-grid {
+            grid-template-columns: 1fr;
+            /* 환율은 1개 컬럼 */
+        }
+
+        .eco-card {
+            background: rgba(0, 0, 0, 0.03);
+            padding: 16px;
+            border-radius: 20px;
+            border: 1px solid rgba(0, 0, 0, 0.04);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        body.dark-mode .eco-card {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .eco-name {
+            font-size: 0.9rem;
+            font-weight: 700;
+            color: var(--text-sub);
+            margin-bottom: 8px;
+        }
+
+        .eco-val {
+            font-size: 1.4rem;
+            font-weight: 800;
+            margin-bottom: 8px;
+            color: var(--text-main);
+        }
+
+        .eco-change.up {
+            color: var(--accent-red);
+            font-size: 0.85rem;
+            font-weight: 700;
+        }
+
+        .eco-change.down {
+            color: var(--accent-blue);
+            font-size: 0.85rem;
+            font-weight: 700;
+        }
+
+        @media (max-width: 650px) {
+            .eco-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .eco-section:last-child .eco-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* ----- CALENDAR (2x1) ----- */
+        .cal-header-row {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            text-align: center;
+            font-size: 0.9rem;
+            font-weight: 800;
+            color: var(--text-sub);
+            margin-bottom: 12px;
+        }
+
+        .cal-header-row .sun {
+            color: var(--accent-red);
+        }
+
+        .cal-header-row .sat {
+            color: var(--accent-blue);
+        }
+
+        .cal-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            text-align: center;
+            gap: 8px 6px;
+        }
+
+        .cal-day {
+            padding: 12px 0;
+            font-size: 1rem;
+            border-radius: 16px;
+            font-weight: 600;
+            transition: all 0.2s;
+            color: var(--text-main);
+        }
+
+        .cal-day:not(.empty):hover {
+            background: rgba(0, 0, 0, 0.04);
+            transform: scale(1.1);
+        }
+
+        body.dark-mode .cal-day:not(.empty):hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .cal-day.today {
+            background: var(--accent-blue);
+            color: white;
+            box-shadow: 0 4px 15px rgba(59, 130, 246, 0.4);
+            transform: scale(1.05);
+        }
+
+        .cal-day.today:hover {
+            transform: scale(1.1);
+        }
+
+        .cal-day.empty {
+            visibility: hidden;
+        }
+
+        /* ----- WEEKLY WEATHER (1x1 Focus) & NEWS (2x2) ----- */
+        .weather-list,
+        .news-list {
+            padding-left: 0;
+            list-style-type: none;
+            flex: 1;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        /* 스크롤바 커스텀 */
+        .weather-list::-webkit-scrollbar,
+        .news-list::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .weather-list::-webkit-scrollbar-thumb,
+        .news-list::-webkit-scrollbar-thumb {
+            background-color: var(--border-color);
+            border-radius: 10px;
+        }
+
+        .weather-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 14px 18px;
+            background: rgba(0, 0, 0, 0.02);
+            border-radius: 16px;
+            transition: 0.2s;
+        }
+
+        body.dark-mode .weather-item {
+            background: rgba(255, 255, 255, 0.02);
+        }
+
+        .weather-item:hover {
+            background: rgba(0, 0, 0, 0.05);
+        }
+
+        body.dark-mode .weather-item:hover {
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .news-item {
+            position: relative;
+            padding: 18px 20px 18px 24px;
+            background: rgba(0, 0, 0, 0.02);
+            border-radius: 18px;
+            transition: 0.2s;
+            text-decoration: none;
+            display: block;
+        }
+
+        body.dark-mode .news-item {
+            background: rgba(255, 255, 255, 0.02);
+        }
+
+        .news-item:hover {
+            background: rgba(0, 0, 0, 0.05);
+            transform: translateX(4px);
+        }
+
+        body.dark-mode .news-item:hover {
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .news-tab {
+            padding: 8px 18px;
+            border-radius: 25px;
+            border: 1px solid var(--border-color);
+            background: rgba(255, 255, 255, 0.4);
+            color: var(--text-main);
+            font-weight: 700;
+            font-size: 0.95rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        body.dark-mode .news-tab {
+            background: rgba(0, 0, 0, 0.2);
+            border-color: rgba(255, 255, 255, 0.1);
+        }
+
+        .news-tab:hover {
+            border-color: var(--text-main);
+        }
+
+        .news-tab.active {
+            background: var(--text-main);
+            color: var(--card-bg);
+            border-color: var(--text-main);
+        }
+
+        /* Slider Dots */
+        .dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background-color: rgba(0, 0, 0, 0.15);
+            transition: background-color 0.3s ease, transform 0.3s ease;
+        }
+
+        body.dark-mode .dot {
+            background-color: rgba(255, 255, 255, 0.3);
+        }
+
+        .dot.active {
+            background-color: var(--text-main);
+            transform: scale(1.2);
+        }
+
+        body.dark-mode .dot.active {
+            background-color: #ffffff;
+            /* 강제로 진한 흰색 표시 */
+        }
+
+        /* Memo Modal UI */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.3);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            z-index: 1000;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            opacity: 0;
+            visibility: hidden;
+            transition: 0.3s ease;
+        }
+
+        body.dark-mode .modal-overlay {
+            background: rgba(0, 0, 0, 0.6);
+        }
+
+        .modal-overlay.active {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .modal-content {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 24px;
+            padding: 24px;
+            width: 90%;
+            max-width: 400px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+            transform: scale(0.95) translateY(10px);
+            transition: 0.3s cubic-bezier(0.25, 1, 0.5, 1);
+        }
+
+        .modal-overlay.active .modal-content {
+            transform: scale(1) translateY(0);
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+
+        .modal-header h3 {
+            margin: 0;
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: var(--text-main);
+        }
+
+        .modal-close-btn {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            color: var(--text-sub);
+            cursor: pointer;
+            border-radius: 50%;
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: 0.2s;
+        }
+
+        .modal-close-btn:hover {
+            background: rgba(0, 0, 0, 0.05);
+            color: var(--text-main);
+        }
+
+        body.dark-mode .modal-close-btn:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        #memo-textarea {
+            width: 100%;
+            height: 120px;
+            background: rgba(0, 0, 0, 0.02);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 12px;
+            font-family: inherit;
+            font-size: 1rem;
+            color: var(--text-main);
+            resize: none;
+            transition: 0.2s;
+            box-sizing: border-box;
+        }
+
+        body.dark-mode #memo-textarea {
+            background: rgba(255, 255, 255, 0.02);
+        }
+
+        #memo-textarea:focus {
+            outline: none;
+            border-color: var(--accent-blue);
+            background: transparent;
+        }
+
+        .modal-actions {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 20px;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border-radius: 10px;
+            font-weight: 700;
+            cursor: pointer;
+            border: none;
+            font-size: 0.95rem;
+            transition: 0.2s;
+        }
+
+        .btn-save {
+            background: var(--text-main);
+            color: var(--card-bg);
+        }
+
+        .btn-save:hover {
+            opacity: 0.8;
+            transform: translateY(-2px);
+        }
+
+        .btn-delete {
+            background: rgba(239, 68, 68, 0.1);
+            color: var(--accent-red);
+            margin-right: auto;
+        }
+
+        .btn-delete:hover {
+            background: var(--accent-red);
+            color: white;
+        }
+
+        /* Calendar Memo Indicator Dot */
+        .cal-day {
+            position: relative;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+
+        .cal-day:not(.empty):hover {
+            background: rgba(0, 0, 0, 0.05);
+            transform: translateY(-2px);
+            border-radius: 12px;
+        }
+
+        body.dark-mode .cal-day:not(.empty):hover {
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .memo-indicator {
+            position: absolute;
+            bottom: 4px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 5px;
+            height: 5px;
+            border-radius: 50%;
+            background-color: var(--accent-red);
+        }
+
+        /* Calendar Nav Buttons */
+        .cal-nav-btn {
+            background: none;
+            border: 1px solid var(--border-color);
+            color: var(--text-main);
+            border-radius: 8px;
+            width: 28px;
+            height: 28px;
+            cursor: pointer;
+            transition: 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 0.9rem;
+        }
+
+        .cal-nav-btn:hover {
+            background: rgba(0, 0, 0, 0.05);
+        }
+
+        body.dark-mode .cal-nav-btn:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .news-item a {
+            color: var(--text-main);
+            text-decoration: none;
+            font-size: 1.05rem;
+            font-weight: 700;
+            line-height: 1.4;
+            display: block;
+        }
+
+        /* Theme Toggle Form */
+        .theme-toggle {
+            position: fixed;
+            bottom: 25px;
+            right: 25px;
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 50%;
+            width: 55px;
+            height: 55px;
+            cursor: pointer;
+            box-shadow: var(--shadow);
+            backdrop-filter: blur(20px);
+            z-index: 1000;
+            font-size: 1.5rem;
+            color: var(--text-main);
+            transition: 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .theme-toggle:hover {
+            transform: scale(1.15) rotate(10deg);
+        }
+    </style>
+</head>
+
+<body>
+
+    <button class="theme-toggle" onclick="toggleTheme()" id="theme-btn" title="테마 변경">🌙</button>
+
+    <div class="dashboard-container">
+
+        <!-- HEADER -->
+        <header class="card header">
+            <div>
+                <h1>상훈's Dashboard</h1>
+                <p class="text-sub" id="greeting-msg">상훈님, 좋은 아침입니다. 활기찬 하루 되세요!</p>
+            </div>
+            <div class="header-meta">
+                <div class="chip" style="font-size: 1.3rem; font-weight: 800; padding: 10px 22px;">🗓️ <span
+                        id="header-date">2026.04.01 (수)</span></div>
+                <div class="chip" style="font-size: 1.3rem; font-weight: 800; padding: 10px 22px;">⏱ <span
+                        id="header-time">00:00:00</span></div>
+            </div>
+        </header>
+
+        <!-- ECONOMY (2x1) -->
+        <div class="card economy">
+            <div class="card-title" style="margin-bottom: 15px;">📈 경제 지표 종합</div>
+            <div style="display:flex; gap:20px; flex:1; flex-wrap: row;">
+                <div class="eco-section" style="flex: 2.5;">
+                    <h3>국내외 주요 증시</h3>
+                    <div class="eco-grid">
+                        <div class="eco-card">
+                            <div class="eco-name">KOSPI</div>
+                            <div class="eco-val">2,580.45</div>
+                            <div class="eco-change up">▲ +0.48%</div>
+                        </div>
+                        <div class="eco-card">
+                            <div class="eco-name">NASDAQ</div>
+                            <div class="eco-val">16,340.10</div>
+                            <div class="eco-change down">▼ -0.12%</div>
+                        </div>
+                        <div class="eco-card">
+                            <div class="eco-name">S&P 500</div>
+                            <div class="eco-val">5,210.30</div>
+                            <div class="eco-change up">▲ +0.03%</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="eco-section" style="flex: 1;">
+                    <h3>원/달러 환율</h3>
+                    <div class="eco-grid">
+                        <div class="eco-card">
+                            <div class="eco-name">USD/KRW</div>
+                            <div class="eco-val">1,345.50</div>
+                            <div class="eco-change down">▼ -2.50원</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- WEATHER TODAY (1x1) -->
+        <div class="card weather" style="padding: 24px;">
+            <div class="card-title" style="margin-bottom: 15px; font-size: 1.05rem;">☀️ 현재 날씨</div>
+            <div class="weather-content" id="today-weather-content" style="gap: 5px;">
+                <p style="color: var(--text-sub); font-size: 0.9rem;">로딩 중...</p>
+            </div>
+        </div>
+
+        <!-- WEATHER WEEKLY (1x1) -->
+        <div class="card focus" style="padding: 24px; display:flex; flex-direction:column; justify-content:flex-start;">
+            <div class="card-title" style="margin-bottom: 12px; font-size: 1.05rem;">⛅ 주간 날씨</div>
+            <div style="overflow: hidden; flex: 1; position: relative;">
+                <div id="week-weather-track"
+                    style="display: flex; width: 200%; transition: transform 0.6s cubic-bezier(0.25, 1, 0.5, 1); height:100%;">
+                    <div id="weather-page-1"
+                        style="width: 50%; display: flex; flex-direction: column; gap: 12px; padding-right: 15px;">
+                        <p style="color: var(--text-sub); text-align: center; margin-top: 20px;">로딩 중...</p>
+                    </div>
+                    <div id="weather-page-2"
+                        style="width: 50%; display: flex; flex-direction: column; gap: 12px; padding-right: 15px;">
+                    </div>
+                </div>
+            </div>
+            <!-- Pagination Dots -->
+            <div style="display: flex; justify-content: center; gap: 7px; margin-top: 15px;" id="weather-dots">
+                <div class="dot active" id="dot-0"></div>
+                <div class="dot" id="dot-1"></div>
+            </div>
+        </div>
+
+        <!-- NEWS (2x1) -->
+        <div class="card news" style="display:flex; flex-direction:column;">
+            <div
+                style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 12px; flex-wrap: wrap; gap: 10px;">
+                <div class="card-title" style="margin-bottom: 0;">📰 실시간 속보 TOP 5</div>
+
+                <div style="display:flex; gap: 8px; overflow-x:auto;">
+                    <button class="news-tab active" onclick="fetchYonhapNews('경제')">경제</button>
+                    <button class="news-tab" onclick="fetchYonhapNews('부동산')">부동산</button>
+                    <button class="news-tab" onclick="fetchYonhapNews('금융')">금융</button>
+                </div>
+            </div>
+
+            <ul class="news-list" id="news-list">
+                <li style="color: var(--text-sub); text-align:center; padding-top:20px; list-style:none;">뉴스를 불러오는
+                    중입니다...</li>
+            </ul>
+        </div>
+
+        <!-- CALENDAR (2x1) -->
+        <div class="card calendar">
+            <div class="card-title" style="display:flex; align-items:center; gap:10px;">
+                <span id="cal-title">📅 2026년 4월</span>
+                <button class="cal-nav-btn" onclick="prevMonth()">&lt;</button>
+                <button class="cal-nav-btn" onclick="nextMonth()">&gt;</button>
+            </div>
+            <div class="cal-header-row">
+                <div class="sun">일</div>
+                <div>월</div>
+                <div>화</div>
+                <div>수</div>
+                <div>목</div>
+                <div>금</div>
+                <div class="sat">토</div>
+            </div>
+            <div class="cal-grid" id="calendar-grid">
+                <!-- Javascript will populate -->
+            </div>
+        </div>
+
+    </div>
+
+    <!-- MEMO MODAL -->
+    <div id="memo-modal-overlay" class="modal-overlay" onclick="closeMemoModal(event)">
+        <div class="modal-content" onclick="event.stopPropagation()">
+            <div class="modal-header">
+                <h3 id="memo-modal-title">메모</h3>
+                <button class="modal-close-btn" onclick="closeMemoModal()">×</button>
+            </div>
+            <textarea id="memo-textarea" placeholder="이 날짜에 기억할 내용을 적어주세요..."></textarea>
+            <div class="modal-actions">
+                <button class="btn btn-delete" id="memo-delete-btn" onclick="deleteMemo()">삭제</button>
+                <button class="btn btn-save" onclick="saveMemo()">저장</button>
+            </div>
+            <input type="hidden" id="memo-date-input" value="">
+        </div>
+    </div>
+
+    <script>
+        // ------------------
+        // 달력 내비게이션 및 공휴일 (nager.at API)
+        // ------------------
+        let currentCalYear = new Date().getFullYear();
+        let currentCalMonth = new Date().getMonth(); // 0-indexed
+        let krHolidays = {};
+        let fetchedHolidayYears = new Set();
+
+        async function fetchHolidays(year) {
+            if (fetchedHolidayYears.has(year)) return;
+            try {
+                const res = await fetch(`https://date.nager.at/api/v3/PublicHolidays/${year}/KR`);
+                if (res.ok) {
+                    const holidays = await res.json();
+                    holidays.forEach(h => krHolidays[h.date] = h.localName);
+                    fetchedHolidayYears.add(year);
+                }
+            } catch (e) { console.error("공휴일 로딩 실패", e); }
+        }
+
+        async function prevMonth() {
+            currentCalMonth--;
+            if (currentCalMonth < 0) { currentCalMonth = 11; currentCalYear--; }
+            await fetchHolidays(currentCalYear);
+            updateCalendarUI();
+        }
+
+        async function nextMonth() {
+            currentCalMonth++;
+            if (currentCalMonth > 11) { currentCalMonth = 0; currentCalYear++; }
+            await fetchHolidays(currentCalYear);
+            updateCalendarUI();
+        }
+
+        function updateCalendarUI() {
+            document.getElementById('cal-title').innerText = `📅 ${currentCalYear}년 ${currentCalMonth + 1}월`;
+            buildCalendar();
+        }
+
+        // ------------------
+        // 달력 일별 메모(Modal) 기능
+        // ------------------
+        function openMemoModal(year, month, day) {
+            const mMonth = String(month).padStart(2, '0');
+            const mDay = String(day).padStart(2, '0');
+            const dateKey = `${year}-${mMonth}-${mDay}`;
+
+            document.getElementById('memo-modal-title').innerText = `📅 ${year}년 ${month}월 ${day}일 메모`;
+            document.getElementById('memo-date-input').value = dateKey;
+
+            const savedMemo = localStorage.getItem(`memo_${dateKey}`);
+            document.getElementById('memo-textarea').value = savedMemo ? savedMemo : '';
+
+            // 등록된 메모가 있으면 삭제 버튼 표시
+            document.getElementById('memo-delete-btn').style.visibility = savedMemo ? 'visible' : 'hidden'; // Corrected
+
+            document.getElementById('memo-modal-overlay').classList.add('active');
+            setTimeout(() => document.getElementById('memo-textarea').focus(), 100);
+        }
+
+        function closeMemoModal(e) {
+            // e가 있고 target이 overlay가 아니라면 무시
+            if (e && e.target !== document.getElementById('memo-modal-overlay')) return;
+            document.getElementById('memo-modal-overlay').classList.remove('active');
+        }
+
+        function saveMemo() {
+            const dateKey = document.getElementById('memo-date-input').value;
+            const content = document.getElementById('memo-textarea').value.trim();
+            if (content) {
+                localStorage.setItem(`memo_${dateKey}`, content);
+            } else {
+                localStorage.removeItem(`memo_${dateKey}`);
+            }
+            closeMemoModal();
+            buildCalendar();
+        }
+
+        function deleteMemo() {
+            const dateKey = document.getElementById('memo-date-input').value;
+            localStorage.removeItem(`memo_${dateKey}`);
+            closeMemoModal();
+            buildCalendar();
+        }
+
+        // ------------------
+        // 실시간 시계 업데이트
+        // ------------------
+        function updateClock() {
+            const now = new Date();
+            const timeStr = now.toLocaleTimeString('ko-KR', { hour12: true, hour: '2-digit', minute: '2-digit', second: '2-digit' });
+            document.getElementById('header-time').innerText = timeStr;
+        }
+
+        // ------------------
+        // 날짜, 헤더 및 명언 세팅
+        // ------------------
+        function initHeader() {
+            const now = new Date();
+            const days = ['일', '월', '화', '수', '목', '금', '토'];
+            const dateStr = `${now.getFullYear()}.${String(now.getMonth() + 1).padStart(2, '0')}.${String(now.getDate()).padStart(2, '0')} (${days[now.getDay()]})`;
+            document.getElementById('header-date').innerText = dateStr;
+
+            // updateCalendarUI handles calendar title separately
+
+            const quotes = [
+                { text: "작은 기회로부터 종종 위대한 업적이 시작된다.", author: "데모스테네스" },
+                { text: "계획 없는 목표는 한낱 꿈에 불과하다.", author: "생텍쥐페리" },
+                { text: "기회는 일어나는 것이 아니라 만들어내는 것이다.", author: "크리스 그로서" },
+                { text: "자신의 능력을 믿어야 한다. 그리고 끝까지 밀고 나가라.", author: "로잘린 카터" },
+                { text: "모든 성취의 시작점은 갈망이다.", author: "나폴레온 힐" },
+                { text: "성공의 비결은 단 한 가지, 바로 결단이다.", author: "도스토예프스키" },
+                { text: "당신이 할 수 있다고 믿든, 할 수 없다고 믿든, 당신이 옳다.", author: "헨리 포드" }
+            ];
+
+            // 날짜 기반 일일 명언
+            const quoteIndex = (now.getFullYear() + now.getMonth() + now.getDate()) % quotes.length;
+            const quote = quotes[quoteIndex];
+
+            document.getElementById('greeting-msg').innerHTML = `"${quote.text}" - <b>${quote.author}</b>`;
+        }
+
+        // ------------------
+        // 달력 렌더링 로직
+        // ------------------
+        function buildCalendar() {
+            const now = new Date();
+            const isCurrentMonth = (currentCalYear === now.getFullYear() && currentCalMonth === now.getMonth());
+            const today = isCurrentMonth ? now.getDate() : -1;
+
+            const firstDay = new Date(currentCalYear, currentCalMonth, 1).getDay();
+            const lastDate = new Date(currentCalYear, currentCalMonth + 1, 0).getDate();
+
+            const calGrid = document.getElementById('calendar-grid');
+            calGrid.innerHTML = '';
+
+            for (let i = 0; i < firstDay; i++) {
+                calGrid.innerHTML += `<div class="cal-day empty"></div>`;
+            }
+
+            for (let i = 1; i <= lastDate; i++) {
+                const currentWeekDay = (firstDay + i - 1) % 7;
+
+                const zeroPadMonth = String(currentCalMonth + 1).padStart(2, '0');
+                const zeroPadDay = String(i).padStart(2, '0');
+                const dateKey = `${currentCalYear}-${zeroPadMonth}-${zeroPadDay}`;
+
+                // 공휴일 확인
+                let isHoliday = false;
+                let holidayName = '';
+                if (krHolidays[dateKey]) {
+                    isHoliday = true;
+                    holidayName = krHolidays[dateKey];
+                    // 공휴일 자동 메모 입력 (사용자 요청)
+                    if (!localStorage.getItem(`memo_${dateKey}`)) {
+                        localStorage.setItem(`memo_${dateKey}`, `🎉 ${holidayName}`);
+                    }
+                }
+
+                let colorClass = '';
+                if (currentWeekDay === 0 || isHoliday) colorClass = 'color: var(--accent-red);';
+                else if (currentWeekDay === 6) colorClass = 'color: var(--accent-blue);';
+
+                const isToday = (i === today) ? 'today' : '';
+
+                // 해당 날짜의 메모가 있는지 로컬 스토리지 확인
+                const hasMemo = localStorage.getItem(`memo_${dateKey}`) ? true : false;
+                const dotHtml = hasMemo ? '<div class="memo-indicator"></div>' : '';
+
+                const nameHtml = isHoliday ? `<div style="position:absolute; top:4px; left:50%; transform:translateX(-50%); font-size: 0.55rem; color: var(--accent-red); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 90%; font-weight: 700;">${holidayName}</div>` : '';
+
+                calGrid.innerHTML += `<div class="cal-day ${isToday}" style="${isToday ? '' : colorClass} display:flex; flex-direction:column; justify-content:center; align-items:center;" onclick="openMemoModal('${currentCalYear}', '${currentCalMonth + 1}', '${i}')"><span>${i}</span>${nameHtml}${dotHtml}</div>`;
+            }
+
+            // 달력 크기를 항상 6줄(42칸)로 고정하여 월간 레이아웃 변동 방지
+            const totalCells = firstDay + lastDate;
+            const remainingCells = 42 - totalCells;
+            for (let i = 0; i < remainingCells; i++) {
+                calGrid.innerHTML += `<div class="cal-day empty"></div>`;
+            }
+        }
+
+        // ------------------
+        // 실시간 지역 날씨 및 주간 날씨 (Open-Meteo & BigDataCloud)
+        // ------------------
+        async function fetchWeather(lat = 37.5665, lon = 126.9780) { // Default: Seoul
+            try {
+                // 1. Weather Data (Current + Daily)
+                const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,weather_code&daily=weathercode,temperature_2m_max,temperature_2m_min&timezone=auto&forecast_days=8`;
+                const res = await fetch(url);
+                const data = await res.json();
+
+                // 2. Air Quality Data (PM10)
+                const aqiUrl = `https://air-quality-api.open-meteo.com/v1/air-quality?latitude=${lat}&longitude=${lon}&current=pm10,pm2_5,european_aqi&timezone=auto`;
+                const aqiRes = await fetch(aqiUrl);
+                const aqiData = await aqiRes.json();
+
+                // 3. Reverse Geocoding (Detailed Location)
+                let city = "현재 위치";
+                try {
+                    const geoUrl = `https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${lat}&longitude=${lon}&localityLanguage=ko`;
+                    const geoRes = await fetch(geoUrl);
+                    const geoData = await geoRes.json();
+                    let locArr = [];
+                    if (geoData.city) {
+                        locArr.push(geoData.city); // 시 단위
+                    } else if (geoData.principalSubdivision) {
+                        locArr.push(geoData.principalSubdivision); // 단일 광역시 대비 fallback
+                    }
+                    // 도/동 단위 생략
+
+                    if (locArr.length > 0) {
+                        city = locArr.join(' ');
+                    }
+                } catch (e) { }
+
+                const weatherCodes = {
+                    0: '☀️ 맑음', 1: '🌤️ 맑음', 2: '⛅ 부분 흐림', 3: '☁️ 흐림',
+                    45: '🌫️ 안개', 48: '🌫️ 안개', 51: '🌦️ 비', 53: '🌧️ 비',
+                    55: '🌧️ 비', 61: '🌧️ 비', 63: '🌧️ 비', 65: '🌧️ 강한 비',
+                    71: '❄️ 눈', 73: '❄️ 눈', 75: '❄️ 눈', 95: '⛈️ 뇌우'
+                };
+
+                // Current Weather Rendering
+                const currentTemp = Math.round(data.current.temperature_2m);
+                const currentCode = data.current.weather_code;
+                const minT = Math.round(data.daily.temperature_2m_min[0]);
+                const maxT = Math.round(data.daily.temperature_2m_max[0]);
+
+                const pm10 = aqiData.current.pm10;
+                let aqiStatus = "좋음"; let aqiColor = "var(--accent-green)"; let aqiBg = "var(--accent-green-light)";
+                if (pm10 > 80) { aqiStatus = "나쁨"; aqiColor = "var(--accent-red)"; aqiBg = "var(--accent-red-light)"; }
+                else if (pm10 > 30) { aqiStatus = "보통"; aqiColor = "#f59e0b"; aqiBg = "#fef3c7"; }
+
+                const todayHTML = `
+                    <div style="font-size: 0.95rem; font-weight: 800; color: var(--text-sub); margin-bottom: 12px; text-align:center; padding: 0 10px; line-height: 1.3;">${city}</div>
+                    <div class="weather-icon" style="font-size: 3.5rem; line-height:1;">${weatherCodes[currentCode] ? weatherCodes[currentCode].split(' ')[0] : '🌤️'}</div>
+                    <div class="temp" style="font-size: 2.8rem; font-weight:800; line-height:1.2;">${currentTemp}<span style="font-size:1.4rem;">℃</span></div>
+                    <div class="weather-details" style="display:flex; flex-direction:column; gap:6px; margin-top:8px; text-align:center;">
+                        <span style="font-weight:700;">${weatherCodes[currentCode] ? weatherCodes[currentCode].split(' ')[1] : '맑음'}</span>
+                        <span style="font-size: 0.9rem; color: var(--text-sub);">
+                            최저 <span style="color:var(--accent-blue); font-weight:700;">${minT}°</span> / 최고 <span style="color:var(--accent-red); font-weight:700;">${maxT}°</span>
+                        </span>
+                        <span style="font-size: 0.9rem; color: var(--text-sub);">
+                            미세먼지 <span style="background:${aqiBg}; color:${aqiColor}; padding:2px 8px; border-radius:10px; font-weight:700; margin-left:4px;">${aqiStatus}</span>
+                        </span>
+                    </div>
+                `;
+                document.getElementById('today-weather-content').innerHTML = todayHTML;
+
+                // Weekly Weather Rendering (8 days, paginated)
+                const p1 = document.getElementById('weather-page-1');
+                const p2 = document.getElementById('weather-page-2');
+                p1.innerHTML = '';
+                p2.innerHTML = '';
+
+                for (let i = 0; i < 8; i++) {
+                    const date = new Date(data.daily.time[i]);
+                    const dayStr = `${date.getMonth() + 1}/${date.getDate()}`;
+                    const code = data.daily.weathercode[i];
+                    const wMinT = Math.round(data.daily.temperature_2m_min[i]);
+                    const wMaxT = Math.round(data.daily.temperature_2m_max[i]);
+                    const iconText = weatherCodes[code] ? weatherCodes[code].split(' ')[0] : '🌤️';
+
+                    const itemHTML = `
+                        <div class="weather-item">
+                            <span style="font-weight:700; width: 40px;">${i === 0 ? '오늘' : dayStr}</span>
+                            <span style="font-size: 1.2rem;">${iconText}</span>
+                            <span style="color: var(--text-sub); font-size: 0.95rem;">
+                                <span style="color:var(--accent-blue); font-weight:700;">${wMinT}°</span> / 
+                                <span style="color:var(--accent-red); font-weight:700;">${wMaxT}°</span>
+                            </span>
+                        </div>
+                    `;
+
+                    if (i < 4) p1.innerHTML += itemHTML;
+                    else p2.innerHTML += itemHTML;
+                }
+
+            } catch (e) {
+                document.getElementById('today-weather-content').innerHTML = '<p style="color:var(--danger);">데이터 오류</p>';
+                document.getElementById('ansan-weather-list').innerHTML = '<li style="color:var(--danger); padding:15px; text-align:center;">오류가 발생했습니다.</li>';
+            }
+        }
+
+        // ------------------
+        // 주간 날씨 슬라이더 자동 회전 및 닷 메뉴 동기화
+        // ------------------
+        let slideIndex = 0;
+        setInterval(() => {
+            const track = document.getElementById('week-weather-track');
+            const dot0 = document.getElementById('dot-0');
+            const dot1 = document.getElementById('dot-1');
+
+            if (track) {
+                slideIndex = (slideIndex + 1) % 2;
+                track.style.transform = `translateX(-${slideIndex * 50}%)`;
+
+                if (slideIndex === 0) {
+                    if (dot0) dot0.classList.add('active');
+                    if (dot1) dot1.classList.remove('active');
+                } else {
+                    if (dot1) dot1.classList.add('active');
+                    if (dot0) dot0.classList.remove('active');
+                }
+            }
+        }, 4000);
+
+        // 브라우저 위치 기반 날씨 요청 트리거
+        function initWeather() {
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(
+                    (pos) => fetchWeather(pos.coords.latitude, pos.coords.longitude),
+                    (err) => fetchWeather(), // Fallback
+                    { enableHighAccuracy: true } // Request precise tracking
+                );
+            } else {
+                fetchWeather(); // Fallback
+            }
+        }
+
+        // ------------------
+        // 실시간 뉴스 탭 (TOP 5)
+
+        // ------------------
+        async function fetchYonhapNews(category = '경제') {
+            const list = document.getElementById('news-list');
+            list.innerHTML = '<li style="color: var(--text-sub); text-align:center; padding-top:30px; list-style:none;">실시간 뉴스를 불러오는 중입니다...</li>';
+
+            // Highlight active tab
+            document.querySelectorAll('.news-tab').forEach(btn => {
+                if (btn.innerText === category) btn.classList.add('active');
+                else btn.classList.remove('active');
+            });
+
+            try {
+                // 구글 뉴스 RSS의 연관도(조회수/주목도) 정렬 활용
+                const query = `연합뉴스 ${category}`;
+                // when:1d 를 사용하여 24시간 내 가장 주목받는(인기있는) 기사를 가져옴
+                const rssUrl = `https://news.google.com/rss/search?q=${encodeURIComponent(query + ' when:1d')}&hl=ko&gl=KR&ceid=KR:ko`;
+                const apiUrl = `https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(rssUrl)}`;
+
+                const res = await fetch(apiUrl);
+                const data = await res.json();
+
+                list.innerHTML = '';
+
+                if (data.status === 'ok' && data.items.length > 0) {
+                    data.items.slice(0, 5).forEach((item, index) => {
+                        let title = item.title.replace(/ - 연합뉴스.*/, '').replace(/ - .*/, '');
+                        title = title.replace(/&quot;/g, '"').replace(/&#39;/g, "'"); // 이스케이프 제거
+
+                        const rankColor = index < 3 ? 'color: var(--accent-red); font-size: 1.2rem;' : 'color: var(--text-sub); font-size: 1.1rem;';
+
+                        list.innerHTML += `
+                            <div class="news-item" style="padding: 12px 15px 12px 15px;">
+                                <div style="position:absolute; left: 14px; top: 14px; font-weight:900; font-style:italic; ${rankColor}">
+                                    ${index + 1}
+                                </div>
+                                <a href="${item.link}" target="_blank" style="margin-left: 20px; line-height: 1.3;">
+                                    ${title}
+                                </a>
+                            </div>
+                        `;
+                    });
+                } else {
+                    list.innerHTML = '<li style="list-style:none;">새로운 기사가 없습니다.</li>';
+                }
+            } catch (e) {
+                document.getElementById('news-list').innerHTML = '<li style="list-style:none; color:var(--danger);">뉴스를 불러오지 못했습니다.</li>';
+            }
+        }
+
+        // ------------------
+        // 테마 관리 (다크/라이트 모드)
+        // ------------------
+        function getTheme() {
+            return localStorage.getItem('morningTheme') || 'light';
+        }
+
+        function applyTheme(theme) {
+            const btn = document.getElementById('theme-btn');
+            if (theme === 'dark') {
+                document.body.classList.add('dark-mode');
+                btn.innerText = '☀️';
+            } else {
+                document.body.classList.remove('dark-mode');
+                btn.innerText = '🌙';
+            }
+        }
+
+        function toggleTheme() {
+            let next = getTheme() === 'light' ? 'dark' : 'light';
+            localStorage.setItem('morningTheme', next);
+            applyTheme(next);
+        }
+
+        // ------------------
+        // 초기화
+        // ------------------
+        initHeader();
+        updateClock();
+        setInterval(updateClock, 1000);
+
+        // 달력 비동기 초기화
+        (async function () {
+            await fetchHolidays(currentCalYear);
+            updateCalendarUI();
+        })();
+
+        initWeather();
+        fetchYonhapNews();
+        applyTheme(getTheme());
+
+    </script>
+</body>
+
+</html>
